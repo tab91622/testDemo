@@ -1,0 +1,109 @@
+<!DOCTYPE html><html><head><meta charSet="utf-8"/><meta name="viewport" content="initial-scale=1.0, width=device-width"/><link rel="stylesheet" href="/iconfont/iconfont.css"/><link rel="stylesheet" href="/css/valine.css"/><script src="//unpkg.com/valine/dist/Valine.min.js"></script><title>文章详情</title><meta name="next-head-count" content="6"/><link rel="preload" href="/_next/static/css/15b92494358f552df174.css" as="style"/><link rel="stylesheet" href="/_next/static/css/15b92494358f552df174.css"/><link rel="preload" href="/_next/static/css/052ae0a44094706a10c2.css" as="style"/><link rel="stylesheet" href="/_next/static/css/052ae0a44094706a10c2.css"/><link rel="preload" href="/_next/static/css/f0082a2b33ba635f4dd9.css" as="style"/><link rel="stylesheet" href="/_next/static/css/f0082a2b33ba635f4dd9.css"/><link rel="preload" href="/_next/static/chunks/main-d5ecf0b3951669ce080c.js" as="script"/><link rel="preload" href="/_next/static/chunks/webpack-488dc228921f1fdbc0e7.js" as="script"/><link rel="preload" href="/_next/static/chunks/framework.1b5fae6dde8a26be77ac.js" as="script"/><link rel="preload" href="/_next/static/chunks/346fcacd.acdc88755e55ded238c8.js" as="script"/><link rel="preload" href="/_next/static/chunks/5b942159a78d3c3cc608ccd4b77e51e0983cab29.ed4d58faabcf26e54f52.js" as="script"/><link rel="preload" href="/_next/static/chunks/08b74a7a597619e1b87151c58acc0528a78ab6f6.c061d003d0886c32baa8.js" as="script"/><link rel="preload" href="/_next/static/chunks/pages/_app-176d4174c88ce65d60a8.js" as="script"/><link rel="preload" href="/_next/static/chunks/pages/front/%5Bid%5D-d60ad66e03ab4249afa4.js" as="script"/></head><body><div id="__next"><div class="Header_nav__p_kME"><a class="Header_item__3KWCo" href="/">博客首页</a><a class="Header_item__3KWCo" href="/front">文章列表</a><a class="Header_item__3KWCo" href="/front/logs">更新日志</a><a class="Header_item__3KWCo" href="/front/about">关于</a></div><div class="main"><div class="FrontRoute_container__zQhnm"><div class="FrontRoute_markdown__3G6E8"><h1>装饰器</h1><p>装饰器可以带来额外的信息量,达到分离关注点的目的</p><ul><li>信息的书写位置问题  数据定义和数据的约束信息分开了,验证时很不方便</li><li>重复代码的问题</li></ul><p>上述两个问题产生的根源: 某些信息,在定义时,能够附加的信息有限</p><p>装饰器的作用:</p><ul><li>为某些属性 类 参数 方法 提供元数据信息(metadata)<blockquote><p>元数据: 描述信息的信息</p></blockquote></li></ul><p>装饰器在 JS 中的<strong>本质是一个函数(是要参与运行的)</strong></p><h2>类装饰器</h2><p>类的装饰器,可以给类添加额外的信息,<strong>在类创建完之后就会立即执行</strong>  以下是编译后的代码:</p><pre><code class="language-js">function test(target) {
+    console.log(target);
+}
+let A = class A {
+};
+A = __decorate([
+    test
+], A);</code></pre><p>要么无返回值,要么只能返回一个类: 新的类会替换掉之前的类;而返回一个函数,会作为之前类的 <code>constructor</code></p><p>调用装饰器:</p><ul><li>可以没有参数(默认传递一个类)<ul><li>注意: 装饰器返回了另外一个类,并且,调用 A 构造出来的,也是另一个类的实例</li></ul></li></ul><pre><code class="language-js">function test(target: new ( ...arg:any[] ) =&gt; object) {
+  console.log(target === A)   // true
+  return class B { }
+}
+
+@test
+class A {
+
+}
+
+const ins = new A()
+console.log(&#x27;ins: &#x27;, ins);  // B {}</code></pre><ul><li>也可以有参数<ul><li>有参数时,先作为普通函数调用;然后返回的类装饰器仍一定要传入 类 参数</li></ul></li></ul><pre><code class="language-js">function d1(str:string){
+  console.log(&#x27;str: &#x27;, str);
+  return function (target:new ()=&gt;object){
+    console.log(&#x27;d1 decorator&#x27;)
+  }
+}
+
+@d1(&quot;Jack&quot;)
+class A {}
+/* 
+str:  Jack
+d1 decorator
+*/</code></pre><h3>装饰器运行顺序</h3><ol><li>首先是函数直接调用,然后将装饰器函数返回</li><li>多个装饰器,会按添加顺序 <strong><em>从后往前</em></strong></li></ol><pre><code class="language-js">function d1(){
+  console.log(&quot;d1&quot;)
+  return function (target:new ()=&gt;object){
+    console.log(&#x27;d1 decorator&#x27;)
+  }
+}
+
+function d2(){
+  console.log(&quot;d2&quot;)
+  return function (target:new ()=&gt;object){
+    console.log(&#x27;d2 decorator&#x27;)
+  }
+}
+
+@d1()
+@d2()
+class A {}
+/* 
+d1
+d2
+d2 decorator
+d1 decorator
+*/</code></pre><h2>成员装饰器</h2><h3>属性</h3><p>类的成员是属性时的装饰器参数:</p><ul><li><strong>实例属性</strong>,第一个参数为 <strong>类的原型</strong>;第二个参数为 属性名</li><li><strong>静态属性</strong>,第一个参数为 <strong>类本身</strong>;第二个参数为 属性名</li></ul><pre><code class="language-js">function d1(target: any, key: string) {
+  console.log(target === A.prototype, key)  // true prop1
+}
+
+function d2(target: any, key: string) {
+  console.log(target === A, key)  // true prop2
+}
+
+class A {
+  @d1
+  prop1: string
+
+  @d2
+  static prop2: string
+}
+
+const a = new A()</code></pre><h3>方法</h3><p>类的方法装饰器函数传递的前两个参数的情况同上;第三个参数的约束类型为 <code>PropertyDescriptor</code>,即属性配置描述:</p><pre><code class="language-js">{
+  value: [Function: method1],
+  writable: true,
+  enumerable: false,
+  configurable: true
+}</code></pre><p>可以直接通过第三个参数修改方法的属性配置:</p><pre><code class="language-js">// 相当于将该方法重新赋值 
+descriptor.value = ()=&gt;{
+    console.warn(&#x27;该方法已过期&#x27;)
+  }</code></pre><h2>参数装饰器</h2><p>好像只能修饰类的方法的参数</p><p>装饰器参数:
+1. 实例方法为 类的原型,静态方法为 类本身
+2. 方法名称
+3. 被修饰的参数的索引</p><pre><code class="language-ts">function d1(target: any, methodName: string, index: number) {
+  console.log(target === User.prototype, methodName, index) // true sayInfo 1
+}
+
+function d2(target: any, methodName: string, index: number) {
+  console.log(target === User, methodName, index) // true sayHello 1
+}
+
+class User {
+  sayInfo(name: string, @d1 age: number) { }
+
+  static sayHello(name: string, @d2 age: number) { }
+}
+
+const u = new User()</code></pre><h3>TS 自动注入元数据</h3><p>安装了 <code>reflect-metadata</code>,且导入了该库,且在某个成员上添加了元数据,并且开启了 <code>emitDecoratorMetadata</code>,那么在编译结果中,会将约束的类型作为元数据加入到相应位置中</p><ul><li>TS 代码</li></ul><pre><code class="language-js">import &#x27;reflect-metadata&#x27;
+
+const metadataKey = Symbol.for(&#x27;description&#x27;)
+
+@Reflect.metadata(metadataKey,&#x27;用户&#x27;)
+class User{
+  @Reflect.metadata(metadataKey,&#x27;姓名&#x27;)
+  name:string 
+
+  @Reflect.metadata(metadataKey,&#x27;年龄&#x27;)
+  age:number
+}
+
+const u = new User()
+u.name = &#x27;Jack&#x27;
+u.age = 20</code></pre></div><hr/><div><div class="FrontRoute_aside__3gFP5"><div class="FrontRouteAside_container__1pfKw"><a class="FrontRouteAside_link__4IF8A FrontRouteAside_left__1-G8B" href="/front/8">上一篇：node 生命周期</a><a class="FrontRouteAside_link__4IF8A FrontRouteAside_right__286L6" href="/front/10">下一篇：TypeScript 泛型</a></div></div><div class="FrontRoute_comments__2cMR7"><div><h2>发表评论</h2><div class="Comment_wrapper__184xV9"></div><h2 id="/front/9" class="leancloud_visitors" data-flag-title="TypeScript 装饰器"><i class="iconfont icon-liulan"></i>  <i class="leancloud-visitors-count"></i></h2></div></div></div></div></div></div><script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"id":"9","title":"TypeScript 装饰器","prev":{"id":8,"title":"node 生命周期"},"next":{"id":10,"title":"TypeScript 泛型"},"md":{"data":"# 装饰器\r\n装饰器可以带来额外的信息量,达到分离关注点的目的\r\n\r\n* 信息的书写位置问题  数据定义和数据的约束信息分开了,验证时很不方便\r\n* 重复代码的问题\r\n\r\n上述两个问题产生的根源: 某些信息,在定义时,能够附加的信息有限\r\n\r\n装饰器的作用:\r\n* 为某些属性 类 参数 方法 提供元数据信息(metadata)\r\n\u003e 元数据: 描述信息的信息\r\n\r\n装饰器在 JS 中的**本质是一个函数(是要参与运行的)**\r\n\r\n## 类装饰器\r\n类的装饰器,可以给类添加额外的信息,**在类创建完之后就会立即执行**  以下是编译后的代码:\r\n\r\n```js\r\nfunction test(target) {\r\n    console.log(target);\r\n}\r\nlet A = class A {\r\n};\r\nA = __decorate([\r\n    test\r\n], A);\r\n```\r\n\r\n要么无返回值,要么只能返回一个类: 新的类会替换掉之前的类;而返回一个函数,会作为之前类的 ```constructor```\r\n\r\n调用装饰器:\r\n* 可以没有参数(默认传递一个类)\r\n    * 注意: 装饰器返回了另外一个类,并且,调用 A 构造出来的,也是另一个类的实例\r\n```js\r\nfunction test(target: new ( ...arg:any[] ) =\u003e object) {\r\n  console.log(target === A)   // true\r\n  return class B { }\r\n}\r\n\r\n@test\r\nclass A {\r\n\r\n}\r\n\r\nconst ins = new A()\r\nconsole.log('ins: ', ins);  // B {}\r\n```\r\n\r\n* 也可以有参数\r\n    * 有参数时,先作为普通函数调用;然后返回的类装饰器仍一定要传入 类 参数\r\n```js\r\nfunction d1(str:string){\r\n  console.log('str: ', str);\r\n  return function (target:new ()=\u003eobject){\r\n    console.log('d1 decorator')\r\n  }\r\n}\r\n\r\n@d1(\"Jack\")\r\nclass A {}\r\n/* \r\nstr:  Jack\r\nd1 decorator\r\n*/\r\n```\r\n\r\n### 装饰器运行顺序\r\n1. 首先是函数直接调用,然后将装饰器函数返回\r\n2. 多个装饰器,会按添加顺序 ***从后往前***\r\n\r\n```js\r\nfunction d1(){\r\n  console.log(\"d1\")\r\n  return function (target:new ()=\u003eobject){\r\n    console.log('d1 decorator')\r\n  }\r\n}\r\n\r\nfunction d2(){\r\n  console.log(\"d2\")\r\n  return function (target:new ()=\u003eobject){\r\n    console.log('d2 decorator')\r\n  }\r\n}\r\n\r\n@d1()\r\n@d2()\r\nclass A {}\r\n/* \r\nd1\r\nd2\r\nd2 decorator\r\nd1 decorator\r\n*/\r\n```\r\n\r\n## 成员装饰器\r\n\r\n### 属性\r\n类的成员是属性时的装饰器参数:\r\n* **实例属性**,第一个参数为 **类的原型**;第二个参数为 属性名\r\n* **静态属性**,第一个参数为 **类本身**;第二个参数为 属性名\r\n\r\n```js\r\nfunction d1(target: any, key: string) {\r\n  console.log(target === A.prototype, key)  // true prop1\r\n}\r\n\r\nfunction d2(target: any, key: string) {\r\n  console.log(target === A, key)  // true prop2\r\n}\r\n\r\nclass A {\r\n  @d1\r\n  prop1: string\r\n\r\n  @d2\r\n  static prop2: string\r\n}\r\n\r\nconst a = new A()\r\n```\r\n\r\n### 方法\r\n类的方法装饰器函数传递的前两个参数的情况同上;第三个参数的约束类型为 ```PropertyDescriptor```,即属性配置描述:\r\n```js\r\n{\r\n  value: [Function: method1],\r\n  writable: true,\r\n  enumerable: false,\r\n  configurable: true\r\n}\r\n```\r\n\r\n可以直接通过第三个参数修改方法的属性配置:\r\n\r\n```js\r\n// 相当于将该方法重新赋值 \r\ndescriptor.value = ()=\u003e{\r\n    console.warn('该方法已过期')\r\n  }\r\n```\r\n\r\n\r\n## 参数装饰器\r\n好像只能修饰类的方法的参数\r\n\r\n装饰器参数:\r\n1. 实例方法为 类的原型,静态方法为 类本身\r\n2. 方法名称\r\n3. 被修饰的参数的索引\r\n\r\n```ts\r\nfunction d1(target: any, methodName: string, index: number) {\r\n  console.log(target === User.prototype, methodName, index) // true sayInfo 1\r\n}\r\n\r\nfunction d2(target: any, methodName: string, index: number) {\r\n  console.log(target === User, methodName, index) // true sayHello 1\r\n}\r\n\r\nclass User {\r\n  sayInfo(name: string, @d1 age: number) { }\r\n\r\n  static sayHello(name: string, @d2 age: number) { }\r\n}\r\n\r\nconst u = new User()\r\n```\r\n\r\n### TS 自动注入元数据\r\n安装了 ```reflect-metadata```,且导入了该库,且在某个成员上添加了元数据,并且开启了 ```emitDecoratorMetadata```,那么在编译结果中,会将约束的类型作为元数据加入到相应位置中\r\n\r\n* TS 代码\r\n```js\r\nimport 'reflect-metadata'\r\n\r\nconst metadataKey = Symbol.for('description')\r\n\r\n@Reflect.metadata(metadataKey,'用户')\r\nclass User{\r\n  @Reflect.metadata(metadataKey,'姓名')\r\n  name:string \r\n\r\n  @Reflect.metadata(metadataKey,'年龄')\r\n  age:number\r\n}\r\n\r\nconst u = new User()\r\nu.name = 'Jack'\r\nu.age = 20\r\n```"}},"__N_SSG":true},"page":"/front/[id]","query":{"id":"9"},"buildId":"jB9Y7kPKJdexBq0JD9Xuy","nextExport":false,"isFallback":false,"gsp":true}</script><script nomodule="" src="/_next/static/chunks/polyfills-c0664c850fd807bc92c2.js"></script><script src="/_next/static/chunks/main-d5ecf0b3951669ce080c.js" async=""></script><script src="/_next/static/chunks/webpack-488dc228921f1fdbc0e7.js" async=""></script><script src="/_next/static/chunks/framework.1b5fae6dde8a26be77ac.js" async=""></script><script src="/_next/static/chunks/346fcacd.acdc88755e55ded238c8.js" async=""></script><script src="/_next/static/chunks/5b942159a78d3c3cc608ccd4b77e51e0983cab29.ed4d58faabcf26e54f52.js" async=""></script><script src="/_next/static/chunks/08b74a7a597619e1b87151c58acc0528a78ab6f6.c061d003d0886c32baa8.js" async=""></script><script src="/_next/static/chunks/pages/_app-176d4174c88ce65d60a8.js" async=""></script><script src="/_next/static/chunks/pages/front/%5Bid%5D-d60ad66e03ab4249afa4.js" async=""></script><script src="/_next/static/jB9Y7kPKJdexBq0JD9Xuy/_buildManifest.js" async=""></script><script src="/_next/static/jB9Y7kPKJdexBq0JD9Xuy/_ssgManifest.js" async=""></script></body></html>

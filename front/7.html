@@ -1,0 +1,99 @@
+<!DOCTYPE html><html><head><meta charSet="utf-8"/><meta name="viewport" content="initial-scale=1.0, width=device-width"/><link rel="stylesheet" href="/iconfont/iconfont.css"/><link rel="stylesheet" href="/css/valine.css"/><script src="//unpkg.com/valine/dist/Valine.min.js"></script><title>文章详情</title><meta name="next-head-count" content="6"/><link rel="preload" href="/_next/static/css/15b92494358f552df174.css" as="style"/><link rel="stylesheet" href="/_next/static/css/15b92494358f552df174.css"/><link rel="preload" href="/_next/static/css/052ae0a44094706a10c2.css" as="style"/><link rel="stylesheet" href="/_next/static/css/052ae0a44094706a10c2.css"/><link rel="preload" href="/_next/static/css/f0082a2b33ba635f4dd9.css" as="style"/><link rel="stylesheet" href="/_next/static/css/f0082a2b33ba635f4dd9.css"/><link rel="preload" href="/_next/static/chunks/main-d5ecf0b3951669ce080c.js" as="script"/><link rel="preload" href="/_next/static/chunks/webpack-488dc228921f1fdbc0e7.js" as="script"/><link rel="preload" href="/_next/static/chunks/framework.1b5fae6dde8a26be77ac.js" as="script"/><link rel="preload" href="/_next/static/chunks/346fcacd.acdc88755e55ded238c8.js" as="script"/><link rel="preload" href="/_next/static/chunks/5b942159a78d3c3cc608ccd4b77e51e0983cab29.ed4d58faabcf26e54f52.js" as="script"/><link rel="preload" href="/_next/static/chunks/08b74a7a597619e1b87151c58acc0528a78ab6f6.c061d003d0886c32baa8.js" as="script"/><link rel="preload" href="/_next/static/chunks/pages/_app-176d4174c88ce65d60a8.js" as="script"/><link rel="preload" href="/_next/static/chunks/pages/front/%5Bid%5D-d60ad66e03ab4249afa4.js" as="script"/></head><body><div id="__next"><div class="Header_nav__p_kME"><a class="Header_item__3KWCo" href="/">博客首页</a><a class="Header_item__3KWCo" href="/front">文章列表</a><a class="Header_item__3KWCo" href="/front/logs">更新日志</a><a class="Header_item__3KWCo" href="/front/about">关于</a></div><div class="main"><div class="FrontRoute_container__zQhnm"><div class="FrontRoute_markdown__3G6E8"><ul><li>组件为了能够维护自身的状态,设置了<code>state</code></li><li>为了能够让React跟踪到状态的变化,规定只能通过<code>setState</code>更新状态</li></ul><h2>可能异步</h2><p>setState 的调用方式相当于 <strong>Object.assign(<em>之前的state,新的state</em>)</strong></p><p>然而,其实 setState 改变数据这个行为,有时候<strong>可能是异步</strong>的,也就是说,如果要立即获取改变后的状态,可能做不到</p><p>如下的代码的大致过程:
+1. state 中声明了一个 n
+2. html 中的 button 注册了一个点击事件
+3. 点击后,让 n + 1
+4. 立即打印 n</p><p><strong>无论点击多少次,打印的始终是上一次 n 的值(不同步)</strong></p><pre><code class="language-js">export default class Test extends Component {
+  state = {
+    n: 0
+  }
+  handleClick=()=&gt;{
+    this.setState({
+      n:this.state.n + 1
+    })
+
+    console.log(this.state.n)  // 上面调用了 setState 后,立即打印 n : 依然等于 0
+  }
+
+  render() {
+    console.log(&#x27;render&#x27;)
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;{this.state.n}&lt;/h1&gt;
+        &lt;button onClick={this.handleClick}&gt;add&lt;/button&gt;
+      &lt;/div&gt;
+    )
+  }
+}</code></pre><h2>原因推测</h2><p>问题的根源,因为还没读过源码,暂且讲不清楚</p><p>不过根据下面的代码,可以推测一二:</p><ul><li>在<code>constructor</code>中添加了一定时器</li><li>通过定时器回调函数改变状态, n + 1</li><li>立即打印改变后的状态</li></ul><p>这时,<strong>每次都是打印改变后的状态 n(同步)</strong></p><pre><code class="language-js">export default class Test extends Component {
+  state = {
+    n: 0
+  }
+
+  constructor(props){
+    super(props)
+    setInterval(()=&gt;{
+      this.setState({
+        n:this.state.n + 1
+      })
+
+      console.log(this.state.n)
+    },1000)
+  }
+
+  render() {
+    console.log(&#x27;render&#x27;)
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;{this.state.n}&lt;/h1&gt;
+      &lt;/div&gt;
+    )
+  }
+}</code></pre><p>两相比较,得出初步结论: <strong>在HTML上使用的处理函数调用的，是异步的;其他都是同步的</strong></p><h2>如何立即访问更新后的状态</h2><p>这里说的只是html处理函数调用的 <code>setState</code>(其他的调用方式都是同步改变的)</p><h3>使用 setState 的第二个参数</h3><p>setState 方法的第二个参数是一个<strong>回调函数</strong>,该函数会在<strong>所有异步改变状态的 setState 执行完之后被调用</strong></p><p>如下的情况(例子仅仅说明问题,没有实际意义):</p><pre><code class="language-js">export default class Test extends Component {
+  state = {
+    n: 0
+  }
+  handleClick=()=&gt;{
+    this.setState({
+      n:this.state.n + 1
+    },()=&gt;{
+      console.log(&#x27;n: &#x27;,this.state.n)
+    })
+  }
+
+  render() {
+    console.log(&#x27;render&#x27;)
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;{this.state.n}&lt;/h1&gt;
+        &lt;button onClick={this.handleClick}&gt;add&lt;/button&gt;
+      &lt;/div&gt;
+    )
+  }
+}</code></pre><p>回调函数中打印的<code>this.state.n</code>是改变后的状态数据</p><h3>setState 直接传递一个函数</h3><p>当需要<strong>连续改变多次状态</strong>,并且使用多次改变状态之后的值时,如果使用上面的方法会造成嵌套,而且导致组件渲染多次,不太好</p><p>可以给 setState 传递一个函数(同样的,例子仅仅说明问题,没有实际意义):
+1. 点击 button 后,连续三次修改状态
+2. 函数的<strong>参数</strong> <code>cur</code>是当前状态,<strong>返回值</strong>是一个对象,与之前的状态 <code>Object.assign</code>
+3. 点击一次,实现了 n + 3</p><pre><code class="language-js">export default class Test extends Component {
+  state = {
+    n: 0
+  }
+  handleClick = () =&gt; {
+    this.setState(cur =&gt; ({
+      n: cur.n + 1
+    }))
+    this.setState(cur =&gt; ({
+      n: cur.n + 1
+    }))
+    this.setState(cur =&gt; ({
+      n: cur.n + 1
+    }))
+  }
+
+  render() {
+    console.log(&#x27;render&#x27;)
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;{this.state.n}&lt;/h1&gt;
+        &lt;button onClick={this.handleClick}&gt;add&lt;/button&gt;
+      &lt;/div&gt;
+    )
+  }
+}</code></pre><h2>结论</h2><ul><li>setState 状态是<strong>不可信任</strong>的,不要使用一般方式立即访问</li><li><strong>HTML 上的处理函数调用</strong>的,比如: <code>onClick</code> <code>onMouseEnter</code> <code>onMouseDown</code> 等等,都是<strong>异步</strong>;其他方式是同步的</li><li>可以给 setState <strong>传递第二个参数</strong>,立即获取改变后的状态</li><li>连续改变状态时,<strong>传递一个函数</strong>,函数参数为当前状态,返回值是将要混合的对象</li></ul></div><hr/><div><div class="FrontRoute_aside__3gFP5"><div class="FrontRouteAside_container__1pfKw"><a class="FrontRouteAside_link__4IF8A FrontRouteAside_left__1-G8B" href="/front/6">上一篇：React 生命周期</a><a class="FrontRouteAside_link__4IF8A FrontRouteAside_right__286L6" href="/front/8">下一篇：node 生命周期</a></div></div><div class="FrontRoute_comments__2cMR7"><div><h2>发表评论</h2><div class="Comment_wrapper__184xV7"></div><h2 id="/front/7" class="leancloud_visitors" data-flag-title="深入了解 setState"><i class="iconfont icon-liulan"></i>  <i class="leancloud-visitors-count"></i></h2></div></div></div></div></div></div><script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"id":"7","title":"深入了解 setState","prev":{"id":6,"title":"React 生命周期"},"next":{"id":8,"title":"node 生命周期"},"md":{"data":"* 组件为了能够维护自身的状态,设置了```state```\r\n* 为了能够让React跟踪到状态的变化,规定只能通过```setState```更新状态\r\n\r\n## 可能异步\r\n\r\nsetState 的调用方式相当于 **Object.assign(*之前的state,新的state*)**\r\n\r\n然而,其实 setState 改变数据这个行为,有时候**可能是异步**的,也就是说,如果要立即获取改变后的状态,可能做不到\r\n\r\n如下的代码的大致过程:\r\n1. state 中声明了一个 n\r\n2. html 中的 button 注册了一个点击事件\r\n3. 点击后,让 n + 1\r\n4. 立即打印 n\r\n\r\n**无论点击多少次,打印的始终是上一次 n 的值(不同步)**\r\n```js\r\nexport default class Test extends Component {\r\n  state = {\r\n    n: 0\r\n  }\r\n  handleClick=()=\u003e{\r\n    this.setState({\r\n      n:this.state.n + 1\r\n    })\r\n\r\n    console.log(this.state.n)  // 上面调用了 setState 后,立即打印 n : 依然等于 0\r\n  }\r\n\r\n  render() {\r\n    console.log('render')\r\n    return (\r\n      \u003cdiv\u003e\r\n        \u003ch1\u003e{this.state.n}\u003c/h1\u003e\r\n        \u003cbutton onClick={this.handleClick}\u003eadd\u003c/button\u003e\r\n      \u003c/div\u003e\r\n    )\r\n  }\r\n}\r\n```\r\n\r\n## 原因推测\r\n问题的根源,因为还没读过源码,暂且讲不清楚\r\n\r\n不过根据下面的代码,可以推测一二:\r\n* 在```constructor```中添加了一定时器\r\n* 通过定时器回调函数改变状态, n + 1\r\n* 立即打印改变后的状态\r\n\r\n这时,**每次都是打印改变后的状态 n(同步)**\r\n\r\n```js\r\nexport default class Test extends Component {\r\n  state = {\r\n    n: 0\r\n  }\r\n\r\n  constructor(props){\r\n    super(props)\r\n    setInterval(()=\u003e{\r\n      this.setState({\r\n        n:this.state.n + 1\r\n      })\r\n\r\n      console.log(this.state.n)\r\n    },1000)\r\n  }\r\n\r\n  render() {\r\n    console.log('render')\r\n    return (\r\n      \u003cdiv\u003e\r\n        \u003ch1\u003e{this.state.n}\u003c/h1\u003e\r\n      \u003c/div\u003e\r\n    )\r\n  }\r\n}\r\n```\r\n\r\n两相比较,得出初步结论: **在HTML上使用的处理函数调用的，是异步的;其他都是同步的**\r\n\r\n## 如何立即访问更新后的状态\r\n这里说的只是html处理函数调用的 `setState`(其他的调用方式都是同步改变的)\r\n\r\n### 使用 setState 的第二个参数 \r\nsetState 方法的第二个参数是一个**回调函数**,该函数会在**所有异步改变状态的 setState 执行完之后被调用**\r\n\r\n如下的情况(例子仅仅说明问题,没有实际意义):\r\n```js\r\nexport default class Test extends Component {\r\n  state = {\r\n    n: 0\r\n  }\r\n  handleClick=()=\u003e{\r\n    this.setState({\r\n      n:this.state.n + 1\r\n    },()=\u003e{\r\n      console.log('n: ',this.state.n)\r\n    })\r\n  }\r\n\r\n  render() {\r\n    console.log('render')\r\n    return (\r\n      \u003cdiv\u003e\r\n        \u003ch1\u003e{this.state.n}\u003c/h1\u003e\r\n        \u003cbutton onClick={this.handleClick}\u003eadd\u003c/button\u003e\r\n      \u003c/div\u003e\r\n    )\r\n  }\r\n}\r\n```\r\n回调函数中打印的```this.state.n```是改变后的状态数据\r\n\r\n### setState 直接传递一个函数\r\n当需要**连续改变多次状态**,并且使用多次改变状态之后的值时,如果使用上面的方法会造成嵌套,而且导致组件渲染多次,不太好\r\n\r\n可以给 setState 传递一个函数(同样的,例子仅仅说明问题,没有实际意义):\r\n1. 点击 button 后,连续三次修改状态\r\n2. 函数的**参数** ```cur```是当前状态,**返回值**是一个对象,与之前的状态 ```Object.assign```\r\n3. 点击一次,实现了 n + 3\r\n\r\n```js\r\nexport default class Test extends Component {\r\n  state = {\r\n    n: 0\r\n  }\r\n  handleClick = () =\u003e {\r\n    this.setState(cur =\u003e ({\r\n      n: cur.n + 1\r\n    }))\r\n    this.setState(cur =\u003e ({\r\n      n: cur.n + 1\r\n    }))\r\n    this.setState(cur =\u003e ({\r\n      n: cur.n + 1\r\n    }))\r\n  }\r\n\r\n  render() {\r\n    console.log('render')\r\n    return (\r\n      \u003cdiv\u003e\r\n        \u003ch1\u003e{this.state.n}\u003c/h1\u003e\r\n        \u003cbutton onClick={this.handleClick}\u003eadd\u003c/button\u003e\r\n      \u003c/div\u003e\r\n    )\r\n  }\r\n}\r\n```\r\n\r\n## 结论\r\n* setState 状态是**不可信任**的,不要使用一般方式立即访问\r\n* **HTML 上的处理函数调用**的,比如: `onClick` `onMouseEnter` `onMouseDown` 等等,都是**异步**;其他方式是同步的\r\n* 可以给 setState **传递第二个参数**,立即获取改变后的状态\r\n* 连续改变状态时,**传递一个函数**,函数参数为当前状态,返回值是将要混合的对象"}},"__N_SSG":true},"page":"/front/[id]","query":{"id":"7"},"buildId":"jB9Y7kPKJdexBq0JD9Xuy","nextExport":false,"isFallback":false,"gsp":true}</script><script nomodule="" src="/_next/static/chunks/polyfills-c0664c850fd807bc92c2.js"></script><script src="/_next/static/chunks/main-d5ecf0b3951669ce080c.js" async=""></script><script src="/_next/static/chunks/webpack-488dc228921f1fdbc0e7.js" async=""></script><script src="/_next/static/chunks/framework.1b5fae6dde8a26be77ac.js" async=""></script><script src="/_next/static/chunks/346fcacd.acdc88755e55ded238c8.js" async=""></script><script src="/_next/static/chunks/5b942159a78d3c3cc608ccd4b77e51e0983cab29.ed4d58faabcf26e54f52.js" async=""></script><script src="/_next/static/chunks/08b74a7a597619e1b87151c58acc0528a78ab6f6.c061d003d0886c32baa8.js" async=""></script><script src="/_next/static/chunks/pages/_app-176d4174c88ce65d60a8.js" async=""></script><script src="/_next/static/chunks/pages/front/%5Bid%5D-d60ad66e03ab4249afa4.js" async=""></script><script src="/_next/static/jB9Y7kPKJdexBq0JD9Xuy/_buildManifest.js" async=""></script><script src="/_next/static/jB9Y7kPKJdexBq0JD9Xuy/_ssgManifest.js" async=""></script></body></html>

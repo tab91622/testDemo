@@ -1,0 +1,41 @@
+<!DOCTYPE html><html><head><meta charSet="utf-8"/><meta name="viewport" content="initial-scale=1.0, width=device-width"/><link rel="stylesheet" href="/iconfont/iconfont.css"/><link rel="stylesheet" href="/css/valine.css"/><script src="//unpkg.com/valine/dist/Valine.min.js"></script><title>文章详情</title><meta name="next-head-count" content="6"/><link rel="preload" href="/_next/static/css/15b92494358f552df174.css" as="style"/><link rel="stylesheet" href="/_next/static/css/15b92494358f552df174.css"/><link rel="preload" href="/_next/static/css/052ae0a44094706a10c2.css" as="style"/><link rel="stylesheet" href="/_next/static/css/052ae0a44094706a10c2.css"/><link rel="preload" href="/_next/static/css/f0082a2b33ba635f4dd9.css" as="style"/><link rel="stylesheet" href="/_next/static/css/f0082a2b33ba635f4dd9.css"/><link rel="preload" href="/_next/static/chunks/main-d5ecf0b3951669ce080c.js" as="script"/><link rel="preload" href="/_next/static/chunks/webpack-488dc228921f1fdbc0e7.js" as="script"/><link rel="preload" href="/_next/static/chunks/framework.1b5fae6dde8a26be77ac.js" as="script"/><link rel="preload" href="/_next/static/chunks/346fcacd.acdc88755e55ded238c8.js" as="script"/><link rel="preload" href="/_next/static/chunks/5b942159a78d3c3cc608ccd4b77e51e0983cab29.ed4d58faabcf26e54f52.js" as="script"/><link rel="preload" href="/_next/static/chunks/08b74a7a597619e1b87151c58acc0528a78ab6f6.c061d003d0886c32baa8.js" as="script"/><link rel="preload" href="/_next/static/chunks/pages/_app-176d4174c88ce65d60a8.js" as="script"/><link rel="preload" href="/_next/static/chunks/pages/front/%5Bid%5D-d60ad66e03ab4249afa4.js" as="script"/></head><body><div id="__next"><div class="Header_nav__p_kME"><a class="Header_item__3KWCo" href="/">博客首页</a><a class="Header_item__3KWCo" href="/front">文章列表</a><a class="Header_item__3KWCo" href="/front/logs">更新日志</a><a class="Header_item__3KWCo" href="/front/about">关于</a></div><div class="main"><div class="FrontRoute_container__zQhnm"><div class="FrontRoute_markdown__3G6E8"><h1>泛型</h1><p>有时书写某个函数时,会丢失一些类型信息(多个位置的类型应该保持一致或有关联的信息)</p><p>泛型: 是指附属于函数 类 接口 类型别名之上的别名</p><h2>使用</h2><h3>函数泛型</h3><p><code>函数名&lt;泛型符号&gt;(){ }</code> </p><ul><li><strong>传递的是一个数字数组,可以根据参数推断出泛型 T 也是数字类型</strong></li></ul><pre><code class="language-js">function take&lt;T&gt;(arr: T[], n: number): T[] {
+  return n&gt;= arr.length ? arr : arr.splice(n)
+}
+// 传递的是一个数字数组,可以根据参数推断出泛型
+take([1, 3, 4, 3, 5], 3)</code></pre><h3>类泛型</h3><p><code>类名&lt;泛型符号&gt;{ }</code></p><h3>类型别名的泛型</h3><p><strong>将 别名名称 和 <code>&lt;泛型符号&gt;</code> 作为一个整体使用</strong></p><p><strong>一般用于设置回调函数的泛型</strong></p><pre><code class="language-js">// 不能确定 n 到底是数字还是字符串 对象等其他类型
+// 使用泛型统一类型信息
+type callback&lt;T&gt; = (n: T, i?: number) =&gt; boolean
+
+function myFilter&lt;T&gt;(arr: T[], cb: callback&lt;T&gt;): T[] {
+  let newArr: T[] = []
+  newArr = arr.filter(n =&gt; cb(n))
+
+  return newArr
+}
+
+myFilter([1, 2, 3, 5, 6, 9], n =&gt; n % 2 !== 0)</code></pre><h2>细节</h2><ul><li><p>很多时候,TS 可以<strong>智能地根据传递的参数,推导出泛型的具体类型</strong> </p></li><li><p>如果无法完成推导,并且又没有传递具体的类型,<strong>默认为空对象</strong></p></li><li><p>泛型可以设置默认值</p></li></ul><h2>泛型约束</h2><p>主要用于约束某一个对象泛型的子类型</p><ul><li>该泛型是一个对象,同时必须具有 name 属性</li></ul><pre><code class="language-js">interface hasName {
+  name: string
+}
+
+/**
+ * @param obj 将一个对象中的name 属性的每个单词首字母大写
+ */
+function nameToUpper&lt;T extends hasName&gt;(obj: T): T {
+  obj.name = obj.name.split(&#x27; &#x27;)
+    .map(s =&gt; s.charAt(0).toUpperCase() + s.slice(1))
+    .join(&#x27; &#x27;)
+
+  return obj
+}</code></pre><h2>多泛型</h2><p>依赖多种类型</p><pre><code class="language-js">function merg&lt;T, K&gt;(arr1: T[], arr2: K[]): (T | K)[] {
+  if (arr1.length !== arr2.length) {
+    throw new Error(&#x27;数组长度不相等&#x27;)
+  } else {
+    const newArr: (T | K)[] = []
+    for (let i = 0; i &lt; arr1.length; i++) {
+      newArr.push(arr1[i], arr2[i])
+    }
+    return newArr
+  }
+}
+
+console.log(&#x27;merg([1,2,3]: &#x27;, merg([1, 2, 3], [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;]));</code></pre></div><hr/><div><div class="FrontRoute_aside__3gFP5"><div class="FrontRouteAside_container__1pfKw"><a class="FrontRouteAside_link__4IF8A FrontRouteAside_left__1-G8B" href="/front/9">上一篇：TypeScript 装饰器</a></div></div><div class="FrontRoute_comments__2cMR7"><div><h2>发表评论</h2><div class="Comment_wrapper__184xV10"></div><h2 id="/front/10" class="leancloud_visitors" data-flag-title="TypeScript 泛型"><i class="iconfont icon-liulan"></i>  <i class="leancloud-visitors-count"></i></h2></div></div></div></div></div></div><script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"id":"10","title":"TypeScript 泛型","prev":{"id":9,"title":"TypeScript 装饰器"},"next":null,"md":{"data":"# 泛型\r\n有时书写某个函数时,会丢失一些类型信息(多个位置的类型应该保持一致或有关联的信息)\r\n\r\n泛型: 是指附属于函数 类 接口 类型别名之上的别名\r\n\r\n## 使用\r\n\r\n### 函数泛型\r\n```函数名\u003c泛型符号\u003e(){ }``` \r\n* **传递的是一个数字数组,可以根据参数推断出泛型 T 也是数字类型**\r\n```js\r\nfunction take\u003cT\u003e(arr: T[], n: number): T[] {\r\n  return n\u003e= arr.length ? arr : arr.splice(n)\r\n}\r\n// 传递的是一个数字数组,可以根据参数推断出泛型\r\ntake([1, 3, 4, 3, 5], 3)\r\n```\r\n\r\n### 类泛型\r\n```类名\u003c泛型符号\u003e{ }```\r\n\r\n\r\n### 类型别名的泛型\r\n**将 别名名称 和 ```\u003c泛型符号\u003e``` 作为一个整体使用**\r\n\r\n**一般用于设置回调函数的泛型**\r\n\r\n```js\r\n// 不能确定 n 到底是数字还是字符串 对象等其他类型\r\n// 使用泛型统一类型信息\r\ntype callback\u003cT\u003e = (n: T, i?: number) =\u003e boolean\r\n\r\nfunction myFilter\u003cT\u003e(arr: T[], cb: callback\u003cT\u003e): T[] {\r\n  let newArr: T[] = []\r\n  newArr = arr.filter(n =\u003e cb(n))\r\n\r\n  return newArr\r\n}\r\n\r\nmyFilter([1, 2, 3, 5, 6, 9], n =\u003e n % 2 !== 0)\r\n```\r\n\r\n## 细节\r\n* 很多时候,TS 可以**智能地根据传递的参数,推导出泛型的具体类型** \r\n\r\n* 如果无法完成推导,并且又没有传递具体的类型,**默认为空对象**\r\n\r\n* 泛型可以设置默认值\r\n\r\n## 泛型约束\r\n主要用于约束某一个对象泛型的子类型\r\n\r\n* 该泛型是一个对象,同时必须具有 name 属性\r\n```js\r\ninterface hasName {\r\n  name: string\r\n}\r\n\r\n/**\r\n * @param obj 将一个对象中的name 属性的每个单词首字母大写\r\n */\r\nfunction nameToUpper\u003cT extends hasName\u003e(obj: T): T {\r\n  obj.name = obj.name.split(' ')\r\n    .map(s =\u003e s.charAt(0).toUpperCase() + s.slice(1))\r\n    .join(' ')\r\n\r\n  return obj\r\n}\r\n```\r\n\r\n## 多泛型\r\n依赖多种类型\r\n\r\n```js\r\nfunction merg\u003cT, K\u003e(arr1: T[], arr2: K[]): (T | K)[] {\r\n  if (arr1.length !== arr2.length) {\r\n    throw new Error('数组长度不相等')\r\n  } else {\r\n    const newArr: (T | K)[] = []\r\n    for (let i = 0; i \u003c arr1.length; i++) {\r\n      newArr.push(arr1[i], arr2[i])\r\n    }\r\n    return newArr\r\n  }\r\n}\r\n\r\nconsole.log('merg([1,2,3]: ', merg([1, 2, 3], ['a', 'b', 'c']));\r\n```"}},"__N_SSG":true},"page":"/front/[id]","query":{"id":"10"},"buildId":"jB9Y7kPKJdexBq0JD9Xuy","nextExport":false,"isFallback":false,"gsp":true}</script><script nomodule="" src="/_next/static/chunks/polyfills-c0664c850fd807bc92c2.js"></script><script src="/_next/static/chunks/main-d5ecf0b3951669ce080c.js" async=""></script><script src="/_next/static/chunks/webpack-488dc228921f1fdbc0e7.js" async=""></script><script src="/_next/static/chunks/framework.1b5fae6dde8a26be77ac.js" async=""></script><script src="/_next/static/chunks/346fcacd.acdc88755e55ded238c8.js" async=""></script><script src="/_next/static/chunks/5b942159a78d3c3cc608ccd4b77e51e0983cab29.ed4d58faabcf26e54f52.js" async=""></script><script src="/_next/static/chunks/08b74a7a597619e1b87151c58acc0528a78ab6f6.c061d003d0886c32baa8.js" async=""></script><script src="/_next/static/chunks/pages/_app-176d4174c88ce65d60a8.js" async=""></script><script src="/_next/static/chunks/pages/front/%5Bid%5D-d60ad66e03ab4249afa4.js" async=""></script><script src="/_next/static/jB9Y7kPKJdexBq0JD9Xuy/_buildManifest.js" async=""></script><script src="/_next/static/jB9Y7kPKJdexBq0JD9Xuy/_ssgManifest.js" async=""></script></body></html>

@@ -1,0 +1,37 @@
+{
+  "id": "1985246",
+  "name": "个人博客",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "9149165",
+      "name": "评论",
+      "font_class": "pinglun",
+      "unicode": "e614",
+      "unicode_decimal": 58900
+    },
+    {
+      "icon_id": "9121572",
+      "name": "点赞",
+      "font_class": "dianzan",
+      "unicode": "e644",
+      "unicode_decimal": 58948
+    },
+    {
+      "icon_id": "12439748",
+      "name": "浏览",
+      "font_class": "liulan",
+      "unicode": "e647",
+      "unicode_decimal": 58951
+    },
+    {
+      "icon_id": "12710702",
+      "name": "收藏",
+      "font_class": "shoucang1",
+      "unicode": "e697",
+      "unicode_decimal": 59031
+    }
+  ]
+}
